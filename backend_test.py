@@ -113,6 +113,24 @@ class DjangoLibraryTester:
             200
         )
 
+    def test_document_detail_existing(self):
+        """Test document detail for existing validated document"""
+        return self.run_test(
+            "Document Detail (Existing - ID 65)",
+            "GET",
+            "client/library/documents/65/",
+            200
+        )
+
+    def test_document_detail_existing_92(self):
+        """Test document detail for existing validated document ID 92"""
+        return self.run_test(
+            "Document Detail (Existing - ID 92)",
+            "GET",
+            "client/library/documents/92/",
+            200
+        )
+
     def test_document_detail_nonexistent(self):
         """Test document detail for non-existent document"""
         return self.run_test(
