@@ -56,39 +56,38 @@ def library_dashboard(request):
     return render(request, 'client/library/dashboard.html', context)
 
 def document_list(request):
-    """Liste des documents avec filtrage"""
+    """Liste des documents RawDocument avec filtrage"""
     # Paramètres de filtrage
     search = request.GET.get('search', '')
     document_type = request.GET.get('type', '')
-    authority_id = request.GET.get('authority', '')
-    category_id = request.GET.get('category', '')
+    country = request.GET.get('country', '')
     language = request.GET.get('language', '')
     validation_status = request.GET.get('status', 'validated')
     
-    # Construction de la requête
-    documents_qs = Document.objects.select_related('authority', 'category').all()
+    # Construction de la requête sur RawDocument
+    documents_qs = RawDocument.objects.select_related('owner').all()
     
-    if validation_status:
-        documents_qs = documents_qs.filter(validation_status=validation_status)
+    # Filtrer seulement les documents validés par défaut
+    if validation_status == 'validated':
+        documents_qs = documents_qs.filter(is_validated=True)
+    elif validation_status == 'pending':
+        documents_qs = documents_qs.filter(is_validated=False)
     
     if search:
         documents_qs = documents_qs.filter(
             Q(title__icontains=search) | 
-            Q(description__icontains=search) |
-            Q(tags__icontains=search)
+            Q(source__icontains=search) |
+            Q(context__icontains=search)
         )
     
     if document_type:
-        documents_qs = documents_qs.filter(document_type=document_type)
+        documents_qs = documents_qs.filter(doc_type__icontains=document_type)
     
-    if authority_id:
-        documents_qs = documents_qs.filter(authority_id=authority_id)
-    
-    if category_id:
-        documents_qs = documents_qs.filter(category_id=category_id)
+    if country:
+        documents_qs = documents_qs.filter(country__icontains=country)
     
     if language:
-        documents_qs = documents_qs.filter(language=language)
+        documents_qs = documents_qs.filter(language__icontains=language)
     
     documents_qs = documents_qs.order_by('-created_at')
     
@@ -97,22 +96,20 @@ def document_list(request):
     page_number = request.GET.get('page')
     documents = paginator.get_page(page_number)
     
-    # Options de filtrage
-    authorities = RegulatoryAuthority.objects.all().order_by('name')
-    categories = DocumentCategory.objects.all().order_by('name')
+    # Options de filtrage basées sur RawDocument
+    document_types = RawDocument.objects.filter(is_validated=True).exclude(doc_type='').values_list('doc_type', flat=True).distinct()
+    countries = RawDocument.objects.filter(is_validated=True).exclude(country='').values_list('country', flat=True).distinct()
+    languages = RawDocument.objects.filter(is_validated=True).exclude(language='').values_list('language', flat=True).distinct()
     
     context = {
         'documents': documents,
-        'authorities': authorities,
-        'categories': categories,
-        'document_types': Document.DOCUMENT_TYPES,
-        'languages': Document.LANGUAGES,
-        'validation_statuses': Document.VALIDATION_STATUS,
+        'document_types': document_types,
+        'countries': countries,
+        'languages': languages,
         'filters': {
             'search': search,
             'type': document_type,
-            'authority': authority_id,
-            'category': category_id,
+            'country': country,
             'language': language,
             'status': validation_status,
         }
