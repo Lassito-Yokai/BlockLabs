@@ -161,6 +161,112 @@ def document_list(request):
     
     return render(request, 'client/library/document_list.html', context)
 
+def documents_by_category(request, category):
+    """Documents filtrés par catégorie de source"""
+    # Définir les filtres de source par catégorie
+    source_filters = {
+        'ema': ['EMA', 'EUROPEAN', 'European Medicines Agency'],
+        'fda': ['FDA', 'Food and Drug Administration'],
+        'ich': ['ICH', 'International Council for Harmonisation'],
+        'ansm': ['ANSM', 'Agence nationale de sécurité du médicament'],
+        'mhra': ['MHRA', 'Medicines and Healthcare products Regulatory Agency'],
+        'neutre': []  # Pour les autres sources
+    }
+    
+    category_lower = category.lower()
+    documents_qs = RawDocument.objects.filter(is_validated=True).select_related('owner')
+    
+    if category_lower in source_filters and source_filters[category_lower]:
+        # Filtrer par sources spécifiques
+        source_query = Q()
+        for source_pattern in source_filters[category_lower]:
+            source_query |= Q(source__icontains=source_pattern)
+        documents_qs = documents_qs.filter(source_query)
+    elif category_lower == 'neutre':
+        # Exclure toutes les sources connues
+        exclude_query = Q()
+        for source_list in source_filters.values():
+            if source_list:  # Ignorer la liste vide pour 'neutre'
+                for pattern in source_list:
+                    exclude_query |= Q(source__icontains=pattern)
+        documents_qs = documents_qs.exclude(exclude_query)
+    
+    documents_qs = documents_qs.order_by('-created_at')
+    
+    # Pagination
+    paginator = Paginator(documents_qs, 20)
+    page_number = request.GET.get('page')
+    documents = paginator.get_page(page_number)
+    
+    context = {
+        'documents': documents,
+        'category': category.upper(),
+        'category_display': {
+            'ema': 'EMA - European Medicines Agency',
+            'fda': 'FDA - Food and Drug Administration', 
+            'ich': 'ICH - International Council for Harmonisation',
+            'ansm': 'ANSM - Agence nationale de sécurité du médicament',
+            'mhra': 'MHRA - Medicines and Healthcare products Regulatory Agency',
+            'neutre': 'Documents - Sources Diverses'
+        }.get(category_lower, category.upper()),
+    }
+    
+    return render(request, 'client/library/documents_by_category.html', context)
+
+def document_list_horizontal(request):
+    """Liste horizontale des documents avec noms et données principales"""
+    # Paramètres de filtrage
+    search = request.GET.get('search', '')
+    document_type = request.GET.get('type', '')
+    country = request.GET.get('country', '')
+    language = request.GET.get('language', '')
+    
+    # Construction de la requête sur RawDocument
+    documents_qs = RawDocument.objects.filter(is_validated=True).select_related('owner')
+    
+    if search:
+        documents_qs = documents_qs.filter(
+            Q(title__icontains=search) | 
+            Q(source__icontains=search) |
+            Q(context__icontains=search)
+        )
+    
+    if document_type:
+        documents_qs = documents_qs.filter(doc_type__icontains=document_type)
+    
+    if country:
+        documents_qs = documents_qs.filter(country__icontains=country)
+    
+    if language:
+        documents_qs = documents_qs.filter(language__icontains=language)
+    
+    documents_qs = documents_qs.order_by('-created_at')
+    
+    # Pagination
+    paginator = Paginator(documents_qs, 50)  # Plus de documents pour la vue horizontale
+    page_number = request.GET.get('page')
+    documents = paginator.get_page(page_number)
+    
+    # Options de filtrage
+    document_types = RawDocument.objects.filter(is_validated=True).exclude(doc_type='').values_list('doc_type', flat=True).distinct()
+    countries = RawDocument.objects.filter(is_validated=True).exclude(country='').values_list('country', flat=True).distinct()
+    languages = RawDocument.objects.filter(is_validated=True).exclude(language='').values_list('language', flat=True).distinct()
+    
+    context = {
+        'documents': documents,
+        'document_types': document_types,
+        'countries': countries,
+        'languages': languages,
+        'filters': {
+            'search': search,
+            'type': document_type,
+            'country': country,
+            'language': language,
+        }
+    }
+    
+    return render(request, 'client/library/document_list_horizontal.html', context)
+
 def document_detail(request, pk):
     """Détail d'un RawDocument avec ses métadonnées extraites par les métadonneurs"""
     document = get_object_or_404(RawDocument, pk=pk, is_validated=True)
