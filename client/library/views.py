@@ -10,6 +10,8 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from client.library.models import Document, DocumentCategory, RegulatoryAuthority, DocumentTranslation
+# Import des modèles RawDocument pour la bibliothèque
+from rawdocs.models import RawDocument
 import json
 import logging
 import os
