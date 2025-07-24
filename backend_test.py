@@ -200,6 +200,11 @@ def main():
     print("\n📤 Testing Upload Functionality...")
     tester.test_upload_document_page()
     
+    # Test document detail functionality
+    print("\n📄 Testing Document Detail Functionality...")
+    tester.test_document_detail_existing()
+    tester.test_document_detail_existing_92()
+    
     # Test error handling
     print("\n⚠️ Testing Error Handling...")
     tester.test_document_detail_nonexistent()
