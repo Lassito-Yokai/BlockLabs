@@ -44,6 +44,49 @@ def library_dashboard(request):
         count=Count('id')
     ).order_by('-count')[:5]
     
+    # 🆕 Statistiques par source avec catégories personnalisées
+    source_stats = RawDocument.objects.filter(
+        is_validated=True
+    ).exclude(source='').values('source').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    # Créer des catégories basées sur les sources
+    categories = {}
+    neutral_count = 0
+    
+    for stat in source_stats:
+        source_name = stat['source'].upper()
+        count = stat['count']
+        
+        # Mapper les sources aux catégories connues
+        if 'EMA' in source_name or 'EUROPEAN' in source_name:
+            if 'EMA' not in categories:
+                categories['EMA'] = {'name': 'EMA', 'count': 0, 'color': '#3498db'}
+            categories['EMA']['count'] += count
+        elif 'FDA' in source_name:
+            if 'FDA' not in categories:
+                categories['FDA'] = {'name': 'FDA', 'count': 0, 'color': '#e74c3c'}
+            categories['FDA']['count'] += count
+        elif 'ICH' in source_name:
+            if 'ICH' not in categories:
+                categories['ICH'] = {'name': 'ICH', 'count': 0, 'color': '#f39c12'}
+            categories['ICH']['count'] += count
+        elif 'ANSM' in source_name:
+            if 'ANSM' not in categories:
+                categories['ANSM'] = {'name': 'ANSM', 'count': 0, 'color': '#2ecc71'}
+            categories['ANSM']['count'] += count
+        elif 'MHRA' in source_name:
+            if 'MHRA' not in categories:
+                categories['MHRA'] = {'name': 'MHRA', 'count': 0, 'color': '#9b59b6'}
+            categories['MHRA']['count'] += count
+        else:
+            neutral_count += count
+    
+    # Ajouter la catégorie Neutre si nécessaire
+    if neutral_count > 0:
+        categories['NEUTRE'] = {'name': 'Neutre', 'count': neutral_count, 'color': '#95a5a6'}
+    
     context = {
         'total_documents': total_documents,
         'pending_validation': pending_validation, 
@@ -51,6 +94,7 @@ def library_dashboard(request):
         'recent_documents': recent_documents,
         'document_type_stats': document_type_stats,
         'country_stats': country_stats,
+        'source_categories': categories,  # 🆕 Nouvelles catégories par source
     }
     
     return render(request, 'client/library/dashboard.html', context)
