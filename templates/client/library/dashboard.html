@@ -166,6 +166,50 @@
                 </div>
             </div>
         </div>
+
+        <!-- 🆕 Catégories par Source -->
+        {% if source_categories %}
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2>Documents par Organisme Réglementaire</h2>
+                <div class="flex gap-2">
+                    <a href="{% url 'client:library:document_list_horizontal' %}" class="text-sm bg-blue-100 hover:bg-blue-200 px-3 py-1 rounded-lg transition-colors">
+                        Vue Liste
+                    </a>
+                </div>
+            </div>
+            
+            <div class="source-categories-grid">
+                {% for key, category in source_categories.items %}
+                <div class="source-category-card" onclick="location.href='{% url 'client:library:documents_by_category' key|lower %}'">
+                    <div class="category-header">
+                        <div class="category-icon" style="background-color: {{ category.color }}20; color: {{ category.color }};">
+                            <i class="material-icons">
+                                {% if key == 'EMA' %}domain
+                                {% elif key == 'FDA' %}local_hospital
+                                {% elif key == 'ICH' %}public
+                                {% elif key == 'ANSM' %}flag
+                                {% elif key == 'MHRA' %}location_city
+                                {% else %}folder
+                                {% endif %}
+                            </i>
+                        </div>
+                        <div class="category-info">
+                            <h3>{{ category.name }}</h3>
+                            <p class="category-count">{{ category.count }} document{{ category.count|pluralize }}</p>
+                        </div>
+                    </div>
+                    <div class="category-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {% widthratio category.count total_documents 100 %}%; background-color: {{ category.color }};"></div>
+                        </div>
+                        <span class="progress-text">{% widthratio category.count total_documents 100 %}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Search Bar flottante -->
