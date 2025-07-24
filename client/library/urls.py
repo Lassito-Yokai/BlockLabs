@@ -1,7 +1,7 @@
 from django.urls import path, include
 from . import views
 
-app_name = 'client_library'
+app_name = 'library'
 
 urlpatterns = [
     # Vues HTML
