@@ -19,34 +19,38 @@ import os
 logger = logging.getLogger(__name__)
 
 def library_dashboard(request):
-    """Vue principale de la library"""
-    # Statistiques générales
-    total_documents = Document.objects.filter(validation_status='validated').count()
-    pending_validation = Document.objects.filter(validation_status='pending').count()
-    authorities_count = RegulatoryAuthority.objects.count()
-    categories_count = DocumentCategory.objects.count()
+    """Vue principale de la library - affiche les documents des métadonneurs"""
+    # Statistiques générales basées sur RawDocument
+    total_documents = RawDocument.objects.filter(is_validated=True).count()
+    pending_validation = RawDocument.objects.filter(is_validated=False).count()
+    total_metadonneurs = RawDocument.objects.values('owner').distinct().count()
     
-    # Documents récents
-    recent_documents = Document.objects.filter(validation_status='validated').select_related('authority', 'category').order_by('-created_at')[:10]
+    # Documents récents validés avec métadonnées
+    recent_documents = RawDocument.objects.filter(
+        is_validated=True
+    ).select_related('owner').order_by('-created_at')[:10]
     
-    # Statistiques par catégorie
-    category_stats = DocumentCategory.objects.annotate(
-        doc_count=Count('document', filter=Q(document__validation_status='validated'))
-    ).order_by('-doc_count')
+    # Statistiques par type de document
+    document_type_stats = RawDocument.objects.filter(
+        is_validated=True
+    ).exclude(doc_type='').values('doc_type').annotate(
+        count=Count('id')
+    ).order_by('-count')[:5]
     
-    # Statistiques par autorité
-    authority_stats = RegulatoryAuthority.objects.annotate(
-        doc_count=Count('document', filter=Q(document__validation_status='validated'))
-    ).order_by('-doc_count')[:5]
+    # Statistiques par pays
+    country_stats = RawDocument.objects.filter(
+        is_validated=True
+    ).exclude(country='').values('country').annotate(
+        count=Count('id')
+    ).order_by('-count')[:5]
     
     context = {
         'total_documents': total_documents,
-        'pending_validation': pending_validation,
-        'authorities_count': authorities_count,
-        'categories_count': categories_count,
+        'pending_validation': pending_validation, 
+        'total_metadonneurs': total_metadonneurs,
         'recent_documents': recent_documents,
-        'category_stats': category_stats,
-        'authority_stats': authority_stats,
+        'document_type_stats': document_type_stats,
+        'country_stats': country_stats,
     }
     
     return render(request, 'client/library/dashboard.html', context)
