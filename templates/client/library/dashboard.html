@@ -79,7 +79,7 @@
             
             <div class="documents-list">
                 {% for document in recent_documents %}
-                <div class="document-card" onclick="location.href='{% url 'client_library:document_detail' document.pk %}'">
+                <div class="document-card" onclick="location.href='{% url 'client:library:document_detail' document.pk %}'">
                     <div class="document-icon">
                         <i class="material-icons red">picture_as_pdf</i>
                     </div>
