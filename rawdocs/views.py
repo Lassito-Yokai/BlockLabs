@@ -179,6 +179,25 @@ def upload_pdf(request):
             rd.save()
             metadata = extract_metadonnees(rd.file.path, rd.url or "")
             text = extract_full_text(rd.file.path)
+            
+            # Sauvegarder les métadonnées extraites par le LLM dans les champs du modèle
+            if metadata:
+                rd.title = metadata.get('title', '')
+                rd.doc_type = metadata.get('type', '')
+                rd.publication_date = metadata.get('publication_date', '')
+                rd.version = metadata.get('version', '')
+                rd.source = metadata.get('source', '')
+                rd.context = metadata.get('context', '')
+                rd.country = metadata.get('country', '')
+                rd.language = metadata.get('language', '')
+                rd.url_source = metadata.get('url_source', rd.url or '')
+                rd.save()
+                
+                print(f"✅ Métadonnées LLM sauvegardées pour le document {rd.pk}")
+                print(f"   - Titre: {rd.title}")
+                print(f"   - Type: {rd.doc_type}")
+                print(f"   - Source: {rd.source}")
+                print(f"   - Pays: {rd.country}")
 
             context.update({
                 'doc': rd,
