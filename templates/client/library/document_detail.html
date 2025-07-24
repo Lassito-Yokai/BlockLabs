@@ -364,10 +364,10 @@
 
     <!-- Document Header -->
     <div class="document-header">
-        <h1 class="document-title">{{ document.title }}</h1>
+        <h1 class="document-title">{{ document|document_title }}</h1>
         
-        {% if document.description %}
-        <p class="document-description">{{ document.description }}</p>
+        {% if document.context %}
+        <p class="document-description">{{ document.context }}</p>
         {% endif %}
         
         <div class="document-actions">
