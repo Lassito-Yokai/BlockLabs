@@ -1,7 +1,8 @@
 {% extends 'client/base.html' %}
 {% load static %}
+{% load document_filters %}
 
-{% block title %}{{ document.title }} - Library - RegX Platform{% endblock %}
+{% block title %}{{ document|document_title }} - Library - RegX Platform{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/library.css' %}">
