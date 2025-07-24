@@ -144,22 +144,16 @@ def document_detail(request, pk):
     return render(request, 'client/library/document_detail.html', context)
 
 def download_document(request, pk):
-    """Télécharger un document"""
-    document = get_object_or_404(Document, pk=pk)
-    
-    if document.validation_status != 'validated':
-        raise Http404("Document non validé")
+    """Télécharger un RawDocument"""
+    document = get_object_or_404(RawDocument, pk=pk, is_validated=True)
     
     if not document.file:
         raise Http404("Fichier non trouvé")
     
-    # Incrémenter le compteur de téléchargements
-    document.download_count += 1
-    document.save(update_fields=['download_count'])
-    
     # Retourner le fichier
-    response = HttpResponse(document.file.read(), content_type='application/octet-stream')
-    response['Content-Disposition'] = f'attachment; filename="{document.title}{document.file_extension}"'
+    response = HttpResponse(document.file.read(), content_type='application/pdf')
+    filename = document.file.name.split('/')[-1]
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
 @api_view(['GET'])
