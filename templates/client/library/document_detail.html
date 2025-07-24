@@ -617,25 +617,7 @@
         </div>
         
         <div class="sidebar-content">
-            <!-- Statistics -->
-            <div class="content-section">
-                <h3 class="section-title">
-                    <i class="material-icons">analytics</i>
-                    Statistiques
-                </h3>
-                <div class="stats-row">
-                    <div class="stat-item">
-                        <div class="stat-number">{{ document.view_count }}</div>
-                        <div class="stat-label">Vues</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number">{{ document.download_count }}</div>
-                        <div class="stat-label">Téléchargements</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Related Documents -->
+            <!-- Documents Related -->
             {% if related_documents %}
             <div class="content-section">
                 <h3 class="section-title">
@@ -648,9 +630,9 @@
                         <i class="material-icons">description</i>
                     </div>
                     <div class="related-doc-content">
-                        <h5>{{ related.title|truncatechars:60 }}</h5>
+                        <h5>{{ related|document_title|truncatechars:60 }}</h5>
                         <div class="related-doc-meta">
-                            {{ related.authority.code }} • {{ related.get_document_type_display }}
+                            {{ related.source|default:related.country }} • {{ related.doc_type|default:"Document" }}
                         </div>
                     </div>
                 </a>
