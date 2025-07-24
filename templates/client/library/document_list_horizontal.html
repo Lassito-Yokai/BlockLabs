@@ -1,0 +1,237 @@
+{% extends 'client/base.html' %}
+{% load static %}
+{% load document_filters %}
+
+{% block title %}Liste Horizontale - Documents{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-green-600 to-teal-600 rounded-2xl p-8 mb-8 text-white">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Liste des Documents</h1>
+                <p class="text-green-100">Vue horizontale avec données principales</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="{% url 'client:library:dashboard' %}" class="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-lg font-medium transition-all">
+                    <i class="material-icons inline mr-2">dashboard</i>
+                    Dashboard
+                </a>
+                <a href="{% url 'client:library:document_list' %}" class="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-lg font-medium transition-all">
+                    <i class="material-icons inline mr-2">grid_view</i>
+                    Vue Grille
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border p-6 mb-8">
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">RECHERCHE</label>
+                    <input type="text" name="search" value="{{ filters.search }}" 
+                           placeholder="Rechercher..." 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">TYPE</label>
+                    <select name="type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        <option value="">Tous les types</option>
+                        {% for type in document_types %}
+                        <option value="{{ type }}" {% if filters.type == type %}selected{% endif %}>
+                            {{ type }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">PAYS</label>
+                    <select name="country" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        <option value="">Tous les pays</option>
+                        {% for country in countries %}
+                        <option value="{{ country }}" {% if filters.country == country %}selected{% endif %}>
+                            {{ country }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">LANGUE</label>
+                    <select name="language" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        <option value="">Toutes les langues</option>
+                        {% for language in languages %}
+                        <option value="{{ language }}" {% if filters.language == language %}selected{% endif %}>
+                            {{ language }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                    <i class="material-icons inline mr-2 text-sm">search</i>
+                    Rechercher
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Count -->
+    <div class="mb-6">
+        <h2 class="text-xl font-semibold text-gray-800">
+            {{ documents.paginator.count }} document{{ documents.paginator.count|pluralize }} trouvé{{ documents.paginator.count|pluralize }}
+        </h2>
+    </div>
+
+    {% if documents %}
+    <!-- Documents List Table -->
+    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pays</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Langue</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Métadonneur</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for document in documents %}
+                    <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="location.href='{% url 'client:library:document_detail' document.pk %}'">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0">
+                                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                        <i class="material-icons text-red-600">picture_as_pdf</i>
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-semibold text-gray-900 truncate">
+                                        {{ document|document_title }}
+                                    </h4>
+                                    {% if document.context %}
+                                    <p class="text-xs text-gray-500 truncate">{{ document.context|truncatewords:8 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if document.doc_type %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ document.doc_type }}
+                            </span>
+                            {% else %}
+                            <span class="text-gray-400 text-xs">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if document.source %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {{ document.source|truncatechars:15 }}
+                            </span>
+                            {% else %}
+                            <span class="text-gray-400 text-xs">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if document.country %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                {{ document.country }}
+                            </span>
+                            {% else %}
+                            <span class="text-gray-400 text-xs">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if document.language %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                {{ document.language|upper }}
+                            </span>
+                            {% else %}
+                            <span class="text-gray-400 text-xs">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <i class="material-icons text-xs">person</i>
+                                </div>
+                                <span class="text-sm text-gray-900">{{ document.owner.username|default:"Anonyme" }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-900">{{ document.created_at|date:"d/m/Y" }}</div>
+                            <div class="text-xs text-gray-500">{{ document.created_at|date:"H:i" }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-2">
+                                <a href="{% url 'client:library:document_detail' document.pk %}" 
+                                   class="text-blue-600 hover:text-blue-800 transition-colors"
+                                   onclick="event.stopPropagation();">
+                                    <i class="material-icons text-sm">visibility</i>
+                                </a>
+                                <a href="{% url 'client:library:download_document' document.pk %}" 
+                                   class="text-green-600 hover:text-green-800 transition-colors"
+                                   onclick="event.stopPropagation();">
+                                    <i class="material-icons text-sm">download</i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if documents.has_other_pages %}
+    <div class="mt-8 flex justify-center">
+        <div class="flex items-center space-x-2">
+            {% if documents.has_previous %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ documents.previous_page_number }}" 
+                   class="p-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+                    <i class="material-icons">chevron_left</i>
+                </a>
+            {% endif %}
+            
+            <span class="px-4 py-2 text-sm text-gray-700">
+                Page {{ documents.number }} sur {{ documents.paginator.num_pages }}
+            </span>
+            
+            {% if documents.has_next %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ documents.next_page_number }}" 
+                   class="p-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+                    <i class="material-icons">chevron_right</i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-12">
+        <i class="material-icons text-6xl text-gray-400 mb-4">table_view</i>
+        <h3 class="text-xl font-semibold text-gray-700 mb-2">Aucun document trouvé</h3>
+        <p class="text-gray-500 mb-6">Aucun document ne correspond à vos critères de recherche.</p>
+        <a href="{% url 'client:library:dashboard' %}" 
+           class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+            <i class="material-icons mr-2">dashboard</i>
+            Retour au Dashboard
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
