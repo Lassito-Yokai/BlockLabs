@@ -118,15 +118,30 @@ def document_list(request):
     return render(request, 'client/library/document_list.html', context)
 
 def document_detail(request, pk):
-    """Détail d'un RawDocument avec ses métadonnées"""
+    """Détail d'un RawDocument avec ses métadonnées extraites par les métadonneurs"""
     document = get_object_or_404(RawDocument, pk=pk, is_validated=True)
     
-    # Obtenir les métadonnées extraites
-    from rawdocs.utils import extract_metadonnees
-    try:
-        metadata = extract_metadonnees(document.file.path, document.url or "")
-    except:
-        metadata = {}
+    # Utiliser directement les métadonnées extraites par les métadonneurs
+    # stockées dans les champs du modèle RawDocument
+    metadata = {
+        'title': document.title or 'Non spécifié',
+        'doc_type': document.doc_type or 'Non spécifié', 
+        'publication_date': document.publication_date or 'Non spécifiée',
+        'version': document.version or 'Non spécifiée',
+        'source': document.source or 'Non spécifiée',
+        'context': document.context or 'Non spécifié',
+        'country': document.country or 'Non spécifié',
+        'language': document.language or 'Non spécifiée',
+        'url_source': document.url_source or document.url or 'Non spécifiée',
+        'owner': document.owner.username if document.owner else 'Non spécifié',
+        'created_at': document.created_at,
+        'is_validated': document.is_validated,
+        'validated_at': document.validated_at,
+        'total_pages': document.total_pages,
+        'pages_extracted': document.pages_extracted,
+        'is_ready_for_expert': document.is_ready_for_expert,
+        'expert_ready_at': document.expert_ready_at,
+    }
     
     # Documents similaires (même type et pays)
     related_documents = RawDocument.objects.filter(
