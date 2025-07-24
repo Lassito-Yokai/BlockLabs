@@ -569,38 +569,49 @@
     <div class="content-sections">
         <div class="main-content">
             <!-- Validation Info -->
-            {% if document.validation_status == 'validated' %}
+            {% if document.is_validated %}
             <div class="content-section">
                 <h3 class="section-title">
                     <i class="material-icons">verified_user</i>
-                    Informations de Validation
+                    Statut Expert et Validation
                 </h3>
                 <div class="metadata-grid">
                     <div class="metadata-item">
                         <div class="metadata-icon green">
-                            <i class="material-icons">person</i>
+                            <i class="material-icons">check_circle</i>
                         </div>
                         <div class="metadata-content">
-                            <div class="metadata-label">Validé par</div>
-                            <div class="metadata-value">{{ document.validated_by }}</div>
+                            <div class="metadata-label">Document Validé</div>
+                            <div class="metadata-value">{{ document.validated_at|date:"d F Y à H:i"|default:"Oui" }}</div>
                         </div>
                     </div>
                     <div class="metadata-item">
-                        <div class="metadata-icon blue">
-                            <i class="material-icons">schedule</i>
+                        <div class="metadata-icon {% if document.is_ready_for_expert %}green{% else %}orange{% endif %}">
+                            <i class="material-icons">{% if document.is_ready_for_expert %}expert_mode{% else %}schedule{% endif %}</i>
                         </div>
                         <div class="metadata-content">
-                            <div class="metadata-label">Date de Validation</div>
-                            <div class="metadata-value">{{ document.validation_date|date:"d F Y à H:i" }}</div>
+                            <div class="metadata-label">Prêt pour Expert</div>
+                            <div class="metadata-value">
+                                {% if document.is_ready_for_expert %}
+                                    Oui - {{ document.expert_ready_at|date:"d F Y à H:i"|default:"Prêt" }}
+                                {% else %}
+                                    Non
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
+                    {% if document.pages_extracted %}
+                    <div class="metadata-item">
+                        <div class="metadata-icon blue">
+                            <i class="material-icons">auto_awesome</i>
+                        </div>
+                        <div class="metadata-content">
+                            <div class="metadata-label">Pages Extraites</div>
+                            <div class="metadata-value">Oui ({{ document.total_pages }} pages)</div>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
-                {% if document.validation_notes %}
-                <div style="margin-top: 16px;">
-                    <div class="metadata-label">Notes de Validation</div>
-                    <p style="margin: 8px 0 0 0; color: #475569;">{{ document.validation_notes }}</p>
-                </div>
-                {% endif %}
             </div>
             {% endif %}
         </div>
