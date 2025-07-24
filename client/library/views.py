@@ -118,30 +118,26 @@ def document_list(request):
     return render(request, 'client/library/document_list.html', context)
 
 def document_detail(request, pk):
-    """Détail d'un document"""
-    document = get_object_or_404(Document, pk=pk)
+    """Détail d'un RawDocument avec ses métadonnées"""
+    document = get_object_or_404(RawDocument, pk=pk, is_validated=True)
     
-    # Incrémenter le compteur de vues
-    document.view_count += 1
-    document.save(update_fields=['view_count'])
+    # Obtenir les métadonnées extraites
+    from rawdocs.utils import extract_metadonnees
+    try:
+        metadata = extract_metadonnees(document.file.path, document.url or "")
+    except:
+        metadata = {}
     
-    # Traductions disponibles
-    translations = DocumentTranslation.objects.filter(original_document=document, validated=True)
-    
-    # Versions du document
-    versions = document.versions.all().order_by('-created_at')
-    
-    # Documents similaires (même autorité et type)
-    related_documents = Document.objects.filter(
-        authority=document.authority,
-        document_type=document.document_type,
-        validation_status='validated'
-    ).exclude(pk=document.pk).select_related('authority', 'category')[:5]
+    # Documents similaires (même type et pays)
+    related_documents = RawDocument.objects.filter(
+        doc_type=document.doc_type,
+        country=document.country,
+        is_validated=True
+    ).exclude(pk=document.pk)[:5]
     
     context = {
         'document': document,
-        'translations': translations,
-        'versions': versions,
+        'metadata': metadata,
         'related_documents': related_documents,
     }
     
