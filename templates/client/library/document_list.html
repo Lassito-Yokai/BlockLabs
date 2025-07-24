@@ -1,7 +1,7 @@
 {% extends 'client/base.html' %}
 {% load static %}
 
-{% block title %}Documents - Library - RegX Platform{% endblock %}
+{% block title %}Documents - Bibliothèque - RegX Platform{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/library.css' %}">
@@ -13,14 +13,10 @@
     <div class="page-header">
         <div class="header-content">
             <div class="header-info">
-                <h1>Documents Réglementaires</h1>
+                <h1>Documents des Métadonneurs</h1>
                 <p>Parcourir et rechercher dans la bibliothèque documentaire</p>
             </div>
             <div class="header-actions">
-                <button class="btn btn-outline" onclick="location.href='{% url 'client:library:upload_document' %}'">
-                    <i class="material-icons">cloud_upload</i>
-                    Upload Document
-                </button>
                 <button class="btn btn-primary" onclick="location.href='{% url 'client:library:dashboard' %}'">
                     <i class="material-icons">dashboard</i>
                     Dashboard
@@ -34,20 +30,169 @@
         <form method="get" class="filters-form">
             <div class="filters-row">
                 <div class="filter-group">
-                    <label>Recherche</label>
+                    <label>RECHERCHE</label>
                     <input type="text" name="search" value="{{ filters.search }}" placeholder="Rechercher par titre, description, tags...">
                 </div>
                 
                 <div class="filter-group">
-                    <label>Type</label>
+                    <label>TYPE</label>
                     <select name="type">
                         <option value="">Tous les types</option>
-                        {% for type_code, type_name in document_types %}
-                        <option value="{{ type_code }}" {% if filters.type == type_code %}selected{% endif %}>
-                            {{ type_name }}
+                        {% for type in document_types %}
+                        <option value="{{ type }}" {% if filters.type == type %}selected{% endif %}>
+                            {{ type }}
                         </option>
                         {% endfor %}
                     </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>PAYS</label>
+                    <select name="country">
+                        <option value="">Tous les pays</option>
+                        {% for country in countries %}
+                        <option value="{{ country }}" {% if filters.country == country %}selected{% endif %}>
+                            {{ country }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>LANGUE</label>
+                    <select name="language">
+                        <option value="">Toutes les langues</option>
+                        {% for language in languages %}
+                        <option value="{{ language }}" {% if filters.language == language %}selected{% endif %}>
+                            {{ language }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+                <i class="material-icons">search</i>
+                Rechercher
+            </button>
+        </form>
+    </div>
+
+    <!-- Results -->
+    <div class="results-section">
+        <div class="results-header">
+            <h2>{{ documents.paginator.count }} document{{ documents.paginator.count|pluralize }} trouvé{{ documents.paginator.count|pluralize }}</h2>
+        </div>
+
+        {% if documents %}
+        <div class="documents-grid">
+            {% for document in documents %}
+            <div class="document-card" onclick="location.href='{% url 'client:library:document_detail' document.pk %}'">
+                <div class="document-icon">
+                    <i class="material-icons red">picture_as_pdf</i>
+                </div>
+                
+                <div class="document-content">
+                    <h3>{{ document.title|default:"Document sans titre" }}</h3>
+                    
+                    <div class="document-metadata">
+                        <div class="meta-row">
+                            <span class="meta-label">Uploadé par:</span>
+                            <span class="meta-value">{{ document.owner.username|default:"Anonyme" }}</span>
+                        </div>
+                        
+                        <div class="meta-row">
+                            <span class="meta-label">Date:</span>
+                            <span class="meta-value">{{ document.created_at|date:"d/m/Y" }}</span>
+                        </div>
+                        
+                        {% if document.doc_type %}
+                        <div class="meta-row">
+                            <span class="meta-label">Type:</span>
+                            <span class="meta-value">{{ document.doc_type }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if document.country %}
+                        <div class="meta-row">
+                            <span class="meta-label">Pays:</span>
+                            <span class="meta-value">{{ document.country }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if document.language %}
+                        <div class="meta-row">
+                            <span class="meta-label">Langue:</span>
+                            <span class="meta-value">{{ document.language }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if document.source %}
+                        <div class="meta-row">
+                            <span class="meta-label">Source:</span>
+                            <span class="meta-value">{{ document.source }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if document.context %}
+                    <div class="document-context">
+                        <p>{{ document.context|truncatewords:20 }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="document-actions">
+                    <span class="badge validated">Validé</span>
+                    <a href="{% url 'client:library:download_document' document.pk %}" class="download-btn" onclick="event.stopPropagation();">
+                        <i class="material-icons">download</i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if documents.has_other_pages %}
+        <div class="pagination-section">
+            <div class="pagination">
+                {% if documents.has_previous %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ documents.previous_page_number }}" class="page-btn">
+                        <i class="material-icons">chevron_left</i>
+                    </a>
+                {% endif %}
+                
+                <span class="page-info">
+                    Page {{ documents.number }} sur {{ documents.paginator.num_pages }}
+                </span>
+                
+                {% if documents.has_next %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ documents.next_page_number }}" class="page-btn">
+                        <i class="material-icons">chevron_right</i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <i class="material-icons">search_off</i>
+            <h3>Aucun document trouvé</h3>
+            <p>Aucun document ne correspond à vos critères de recherche.</p>
+            <button class="btn btn-primary" onclick="location.href='{% url 'client:library:dashboard' %}'">
+                <i class="material-icons">dashboard</i>
+                Retour au Dashboard
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/library.js' %}"></script>
+{% endblock %}
                 </div>
                 
                 <div class="filter-group">
